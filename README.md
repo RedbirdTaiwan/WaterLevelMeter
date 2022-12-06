@@ -41,5 +41,11 @@
 
 ### Code 1: [waterlevel_code1.ino](waterlevel_code1.ino)
  - Adjust RTC with buttons of the LCD Keypad Shield
+  * SELECT: Options change between year, month, day, hour, minute, second, schedule (every * minutes)
+  * LEFT: Show datetime now
+  * UP: Increase the number of select options
+  * DOWN: Decrease the number of select options
+  * RIGHT: Detect the range between the SR-04T and water surface, and then go deep sleeping
  - Detect the range between the JSN SR-04T and the water surface every 5 minutes
  - Go deep sleeping after detection
+ - Switch off the power of the LCD Keypad Shield manually for power saving

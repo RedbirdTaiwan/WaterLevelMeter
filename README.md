@@ -1,51 +1,79 @@
 # 自動水位計 Water Level Meter
-自動水位計 Water Level Meter based on WeMos D1 R32 ESP32
-![Water Level Meter](./imgs/photos.jpg)
+- 定時起動測距並存入SD卡後關閉電源
+![Water Level Meter](./imgs/photo.jpg)
 
-## Hardwares
-- [WeMos D1 R32 ESP32](https://www.taiwansensor.com.tw/product/wemos-d1-r32-esp-32-%E9%96%8B%E7%99%BC%E7%89%88-%E8%97%8D%E8%8A%BD-wifi-uno-r3-%E4%B8%80%E9%AB%94-4mb-%E8%A8%98%E6%86%B6%E9%AB%94/): 360 NTD
-- [LCD Keypad Shield](https://create.arduino.cc/projecthub/electropeak/using-1602-lcd-keypad-shield-w-arduino-w-examples-e02d95): 150 NTD
-- [SD/Micro SD Card Module](https://create.arduino.cc/projecthub/electropeak/sd-card-module-with-arduino-how-to-read-write-data-37f390): 25 NTD
-- [JSN SR-04T](https://www.jmaker.com.tw/products/jsn-sr04t): 270 NTD
-- 10kΩ resistor
+## 硬體 Hardwares
+- [Arduino UNO R3](https://docs.arduino.cc/hardware/uno-rev3): [NT$760](https://www.taiwansensor.com.tw/product/arduino-uno-r3-%E7%BE%A9%E5%A4%A7%E5%88%A9%E5%8E%9F%E8%A3%9D-arduino-uno-rev33-%E9%96%8B%E7%99%BC%E6%9D%BF-made-in-italy/)
+- Data Logging shield: [NT$95](https://www.taiwansensor.com.tw/product/arduino-data-logging-shield-%E6%95%B8%E6%93%9A%E8%B3%87%E6%96%99%E7%B4%80%E9%8C%84%E6%93%B4%E5%85%85%E6%9D%BF-%E5%85%A7%E5%BB%BA%E6%99%82%E9%90%98%E6%A8%A1%E7%B5%84/)
+- LCD Keypad Shield: [NT$143](https://www.taiwaniot.com.tw/product/arduino-lcd-keypad-shield-lcd1602-%E6%B6%B2%E6%99%B6%E6%8C%89%E9%8D%B5%E6%93%B4%E5%B1%95%E6%9D%BF/)
+- JSN-SR04T: 一體化超音波測距模組 [NT$ 230](https://www.jmaker.com.tw/products/jsn-sr04t)
+- Adafruit TPL5110 Low Power Timer: [NT$ 177](https://www.digikey.tw/zh/products/detail/adafruit-industries-llc/3435/6817229?utm_adgroup=General&utm_source=google&utm_medium=cpc&utm_campaign=PMax%20Shopping_Product_High%20ROAS&utm_term=&productid=6817229&utm_content=General&utm_id=go_cmp-17816677620_adg-_ad-__dev-c_ext-_prd-6817229_sig-Cj0KCQiA4Y-sBhC6ARIsAGXF1g7mh5dq-jS-meWzVdt6N0Bxc7rBbIxxHn7A2hlxktgEKeGiNdYmplUaAk5OEALw_wcB&gad_source=1&gclid=Cj0KCQiA4Y-sBhC6ARIsAGXF1g7mh5dq-jS-meWzVdt6N0Bxc7rBbIxxHn7A2hlxktgEKeGiNdYmplUaAk5OEALw_wcB)
+- USB 5V升壓模組: [NT$48](https://www.taiwaniot.com.tw/product/dc-dc%E5%8D%87%E5%A3%93%E6%A8%A1%E7%B5%840-95v%E5%8D%875v-600ma-usb%E5%8D%87%E5%A3%93%E9%9B%BB%E8%B7%AF%E6%9D%BF-%E8%A1%8C%E5%8B%95%E9%9B%BB%E6%BA%90/)
+- 5V以下外接電源
+- 10kΩ 電阻
+- TPL5110電阻: 依定時間隔選購
+|Timer | Resistance|
+| -------- | -------- |
+|100 ms | 500 Ω|
+|200 ms | 1000 Ω|
+|300 ms | 1500 Ω|
+|400 ms | 2000 Ω|
+|500 ms | 2500 Ω|
+|600 ms | 3000 Ω|
+|700 ms | 3500 Ω|
+|800 ms | 4000 Ω|
+|900 ms | 4500 Ω|
+|1 s | 5.20 kΩ|
+|2 s | 6.79 kΩ|
+|7 s | 9.71 k Ω|
+|8 s | 10.18 kΩ|
+|9 s | 10.68 kΩ|
+|30 s | 16.78 kΩ|
+|50 s | 20.047 kΩ|
+|2 min | 29.35 kΩ|
+|3 min | 34.73 kΩ|
+|4 min | 39.11 kΩ|
+|5 min | 42.90 kΩ|
+|6 min | 46.29 kΩ|
+|7 min | 49.38 kΩ|
+|9 min | 54.92 kΩ|
+|10 min | 57.44 kΩ|
+|20 min | 77.57 kΩ|
+|30 min | 92.43 kΩ|
+|40 min | 104.67 kΩ|
+|50 min | 115.33 kΩ|
+|1 hr | 124.91 kΩ|
+|1 hr 30 min | 149.39 kΩ|
 
-## Wiring
+## 接線Wiring
 ![Water Level Meter layout](./imgs/layout.png)
 
-### LCD Keypad Shield - WeMos D1 R32 ESP32
- 1. Cut out pins: 3.3V, 5V, GND(1st), RESET, GND(3rd), GPIO 18,19,23,5,25,26,1,3
- 2. Wiring GND & GPIO 12 with 10kΩ resistor
- 3. Wiring A0 & A2
- 4. Fit together the LCD Keypad Shield & the WeMos D1 R32 ESP32
- 5. Connect the 5V power pin of the WeMos D1 R32 ESP32 to the ICSP power pin of the LCD Keypad Shield with a switch
+### Data Logging shield - JSN SR-04T
+ 1. 剪斷A4, A5
+ 2. A1和GND用一個10kΩ接起來
+ 3. A1接TPL5110的Done
+ 4. 版子左右的SCL和SDA別別接起來
+ 5. D3接JSN SR-04T的RX
+ 6. D2接JSN SR-04T的TX
+ 7. 5V接JSN SR-04T的5V
+ 8. GND接JSN SR-04T的GND
 
-### SD/Micro SD Card Module - WeMos D1 R32 ESP32
-| SD Card | D1 R32 |
-| -------- | -------- |
-| GND | GND |
-| 3.3V | 3.3V |
-| CS | GPIO 5 |
-| MOSI | GPIO 23 |
-| SCK | GPIO 18 |
-| MISO | GPIO 19 |
+### TPL5110
+1. VDD接外接電源+
+2. GND接外接電源-
+3. Delay和GND間用電阻接起來, 參考上面的表, 但不太準
+4. DRV接USB模組+
+5. Done接Data Logging shield A1
 
-### JSN SR-04T - WeMos D1 R32 ESP32
-| SR-04T | D1 R32 |
-| -------- | -------- |
-| 5V | 5V |
-| RX | GPIO 25 |
-| TX | GPIO 26 |
-| GND | GND |
+### USB模組
+1. +接TPL5110 DRV
+2. -接外接電源-
 
 ## Code
 
 ### Code 1: [waterlevel_code1.ino](waterlevel_code1.ino)
- - Adjust RTC with buttons of the LCD Keypad Shield
-  * SELECT: Options change between year, month, day, hour, minute, second, schedule (every * minutes)
-  * LEFT: Show datetime now
-  * UP: Increase the number of select options
-  * DOWN: Decrease the number of select options
-  * RIGHT: Detect the range between the SR-04T and water surface, and then go deep sleeping
- - Detect the range between the JSN SR-04T and the water surface every 5 minutes
- - Go deep sleeping after detection
- - Switch off the power of the LCD Keypad Shield manually for power saving
+ - 用LCD Keypad Shield調整 Adjust RTC with buttons of the LCD Keypad Shield
+  * SELECT: 選擇要調整的單位(年月日時分秒) Options change between year, month, day, hour, minute, second, schedule (every * minutes)
+  * LEFT: 顯示現在時間 Show datetime now
+  * UP: 增加值 Increase the number of select options
+  * DOWN: 減少值 Decrease the number of select options

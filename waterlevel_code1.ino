@@ -1,4 +1,4 @@
-// 引入函式庫
+// Date and time functions using a DS1307 RTC connected via I2C and Wire lib
 #include "RTClib.h"
 #include <LCD4Bit_mod.h>
 #include <SPI.h>
@@ -6,18 +6,17 @@
 
 RTC_DS1307 rtc;
 LCD4Bit_mod lcd = LCD4Bit_mod(2);
-Sd2Card card;
-SdVolume volume;
-
-//超音波測距模組JSN-SR04T
-const byte trigPin = 3; //超音波測距的 觸發腳
-const byte echoPin = 2; //超音波測距的 回應腳
-const int maxDist = 600; //設定超音波偵測最長有效正常值, 傳回值大於此值的資料視為錯誤
-const int minDist = 25; //設定超音波偵測最短有效正常值, 傳回值小於此值的資料視為錯誤
 
 char buffrt_datetime[20];
 char distance[10];
 char cardsize[4] = "";
+
+//超音波測距模組JSN-SR04T
+const byte trigPin = 3; //超音波測距的 觸發腳
+const byte echoPin = 2; //超音波測距的 回應腳
+const int maxDist = 600;
+const int minDist = 25;
+
 char options[7][16] = {"Year:", "Month:", "Day:", "Hour:", "Minute:", "Second:" };
 int adc_key_val[5] ={30, 150, 360, 535, 760 };
 int NUM_KEYS = 5;
@@ -25,12 +24,15 @@ int adc_key_in;
 int key=-1;
 int oldkey=-1;
 int tkey = -1;
-int nowtime[6] ={2023, 1, 1, 0, 0, 0 }; //RTC初始預設日期時間
-int uplimit[6] ={2030, 12, 31, 23, 59, 59 }; //設定時間設定循環的最大日期
-int downlimit[6] ={2023, 1, 1, 0, 0, 0 }; //設定時間設定循環的最小日期
+int nowtime[6] ={2024, 1, 1, 0, 0, 0 };
+int uplimit[6] ={2030, 12, 31, 23, 59, 59 };
+int downlimit[6] ={2024, 1, 1, 0, 0, 0 };
+
 const byte DonePin = A1; //通知TPL5110定時器關掉電源
 
-// 取得現在時間
+Sd2Card card;
+SdVolume volume;
+
 void gettime() {
   DateTime now = rtc.now();
   nowtime[0] = now.year();
@@ -48,7 +50,7 @@ float getDistance() {
   float distance = 0;
   float mind = maxDist;
   float maxd = minDist;
-  int tt = 5; // 取 5 次正常值的平均值
+  int tt = 10; /* 5 times tried for average ranging */
   for(int i=0;i<tt;i++){
     delay(150);
     digitalWrite(trigPin, HIGH);
@@ -57,7 +59,7 @@ float getDistance() {
     long duration = pulseIn(echoPin, HIGH);
     float d = duration*0.034/2;
     Serial.println(d, 0);
-    if( d < minDist || d > maxDist){ //檢查是否為正常值
+    if( d < minDist || d > maxDist){ //deBug
       i -= 1;
     }else{
       distance += d;
@@ -68,7 +70,7 @@ float getDistance() {
         maxd = d;
       }
     }
-    if(j > 49){ //測50次還測不到5次正常值就放棄, 輸出-9999
+    if(j > 49){
       return -9999;
     }
     j += 1;
@@ -76,7 +78,6 @@ float getDistance() {
   return (distance-mind-maxd)/(tt-2);
 }
 
-// 測距並寫入SD卡
 void logging () {
     DateTime now = rtc.now();
     sprintf(buffrt_datetime, "%04d-%02d-%02d %02d:%02d:%02d", now.year(), now.month(), now.day(), now.hour(), now.minute(), now.second());
@@ -84,6 +85,7 @@ void logging () {
     File dataFile = SD.open("water.txt", FILE_WRITE);
     if (! dataFile) {
       Serial.println("error opening water.txt");
+      // Wait forever since we cant write data
       while (1) ;
     }
     dataFile.print(d, 1);
@@ -104,17 +106,17 @@ void logging () {
 }
 
 void setup () {  
-  Serial.begin(9600);
+  Serial.begin(115200);
   pinMode(trigPin, OUTPUT);
   pinMode(echoPin, INPUT);
   pinMode(DonePin, OUTPUT);
   digitalWrite(DonePin, LOW);
-  lcd.init();
+  lcd.init();  
+  lcd.clear();
+  lcd.cursorTo(1,0);
+  lcd.printIn("Testing RTC");
   
   if (! rtc.begin()) {
-    lcd.clear();
-    lcd.cursorTo(1,0);
-    lcd.printIn("Find NO RTC");
     Serial.println("Couldn't find RTC");
     Serial.flush();
     while (1) delay(10);
@@ -127,12 +129,16 @@ void setup () {
   
   DateTime now = rtc.now();
   sprintf(buffrt_datetime, "%04d-%02d-%02d %02d:%02d:%02d", now.year(), now.month(), now.day(), now.hour(), now.minute(), now.second());
+  lcd.clear();
+  lcd.cursorTo(1,0);
+  lcd.printIn(buffrt_datetime);
   
   if (!SD.begin()) {
     Serial.println("Card failed, or not present");
     lcd.clear();
     lcd.cursorTo(1,0);
     lcd.printIn("SD Card failed.");
+    // don't do anything more:
     while (1) ;
   }
   while (!card.init(SPI_HALF_SPEED)) {
@@ -167,10 +173,10 @@ void setup () {
   lcd.cursorTo(2,13);
   lcd.printIn(" Mb");
   logging();
+  delay(1000);
   digitalWrite(DonePin, HIGH);
 }
 
-// LED按鍵訊號轉換
 int get_key(unsigned int input)
 {
   int k;
@@ -191,7 +197,6 @@ int get_key(unsigned int input)
 void loop () {
   delay(50);    // wait for debounce time
   adc_key_in = analogRead(0);    // read the value from the sensor  
-  Serial.println(adc_key_in);
   key = get_key(adc_key_in);            // convert into key press
   if (key != oldkey)        
   {     
@@ -211,6 +216,9 @@ void loop () {
         nowtime[tkey] = downlimit[tkey];
       }
       rtc.adjust(DateTime(nowtime[0], nowtime[1], nowtime[2], nowtime[3], nowtime[4], nowtime[5]));
+      lcd.clear();
+      lcd.cursorTo(1,0);
+      lcd.printIn(options[tkey]);
       lcd.cursorTo(2,0);
       char charBuf[4];
       sprintf(charBuf, "%d", nowtime[tkey]);
@@ -231,6 +239,7 @@ void loop () {
       lcd.printIn(charBuf);
     }
     else if ( key == 3){
+      lcd.clear();
       showtime();
     }
     else {
@@ -240,7 +249,6 @@ void loop () {
   }
 }
 
-// 於LED顯示現在時間
 void showtime(){
   DateTime now = rtc.now();
   sprintf(buffrt_datetime, "%04d-%02d-%02d %02d:%02d:%02d", now.year(), now.month(), now.day(), now.hour(), now.minute(), now.second());
